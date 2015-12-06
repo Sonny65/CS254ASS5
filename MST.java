@@ -31,7 +31,7 @@ import java.util.concurrent.ConcurrentSkipListSet;
 public class MST {
     private static int n = 50;              // default number of points
     private static long sd = 0;             // default random number seed
-    private static int numThreads = 1;      // default
+    private static int numThreads = 56;      // default
 
     private static final int TIMING_ONLY    = 0;
     private static final int PRINT_EVENTS   = 1;
@@ -751,20 +751,44 @@ class Surface {
             triangulate(l, i, low1, high1, low0, mid, 1-parity);
         } else {
             // divide and conquer
-            if (numThreads > -16){
-                triangulateWorker tWorker1 = new triangulateWorker(l, i, low1, high1, low0, mid, 1-parity);
-                tWorker1.start();
-                numThreads--;
-                triangulateWorker tWorker2 = new triangulateWorker(j, r, low1, high1, mid, high0, 1-parity);
-                tWorker2.start();
-                numThreads--;
+            if (numThreads > 1){
+                if ((i-l)>5000&&(r-j)>5000) {
+                    triangulateWorker tWorker1 = new triangulateWorker(l, i, low1, high1, low0, mid, 1-parity);
+                    tWorker1.start();
+                    numThreads--;
+                    triangulateWorker tWorker2 = new triangulateWorker(j, r, low1, high1, mid, high0, 1-parity);
+                    tWorker2.start();
+                    numThreads--;
 
-                try {
-                    tWorker1.join();
-                    numThreads++;
-                    tWorker2.join();
-                    numThreads++;
-                } catch (InterruptedException e){}
+                    try {
+                        tWorker1.join();
+                        numThreads++;
+                        tWorker2.join();
+                        numThreads++;
+                    } catch (InterruptedException e){}
+                } else if ((i-l)>5000) {
+                    triangulateWorker tWorker1 = new triangulateWorker(l, i, low1, high1, low0, mid, 1-parity);
+                    tWorker1.start();
+                    numThreads--;
+                    triangulate(j, r, low1, high1, mid, high0, 1-parity);
+
+                    try {
+                        tWorker1.join();
+                        numThreads++;
+                    } catch (InterruptedException e){}
+                } else if ((r-j)>5000) {
+                    triangulateWorker tWorker2 = new triangulateWorker(j, r, low1, high1, mid, high0, 1-parity);
+                    tWorker2.start();
+                    numThreads--;
+
+                    try {
+                        tWorker2.join();
+                        numThreads++;
+                    } catch (InterruptedException e){}
+                } else {
+                    triangulate(l, i, low1, high1, low0, mid, 1-parity);
+                    triangulate(j, r, low1, high1, mid, high0, 1-parity);
+                }
             } else {
                 triangulate(l, i, low1, high1, low0, mid, 1-parity);
                 triangulate(j, r, low1, high1, mid, high0, 1-parity);
