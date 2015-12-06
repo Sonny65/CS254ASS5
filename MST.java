@@ -549,7 +549,7 @@ class Surface {
         miny = Integer.MAX_VALUE;
         maxx = Integer.MIN_VALUE;
         maxy = Integer.MIN_VALUE;
-        pointHash.clear();      // empty out the set of points
+        pointHash.clear();      // empty out the set of pointsx
         for (int i = 0; i < n; i++) {
             point p;
             int x;
@@ -744,6 +744,7 @@ class Surface {
 
         if (i < l) {
             // empty left half
+            
             triangulate(j, r, low1, high1, mid, high0, 1-parity);
         } else if (j > r) {
             // empty right half
@@ -916,6 +917,36 @@ class Surface {
                     base = new edge(lc, right.p, left.a, right.a, dir1);
                 }
             }
+        }
+    }
+
+    class triangulateWorker extends Thread {
+    int l;
+    int r;
+    int low0;
+    int high0;
+    int low1;
+    int high1;
+    int parity;
+
+    public void run() {
+        try {
+            coord.register();
+            triangulate(l, r, low0, high0, low1, high1, parity);
+            coord.unregister();
+        } catch(Coordinator.KilledException e) { }
+    }
+
+    // Constructor
+    //
+    public triangulateWorker(int L,int R,int LOW0, int HIGH0, int LOW1, int HIGH1, int PARITY) {
+            l = L;
+            r = R;
+            low0 = LOW0;
+            low1 = LOW1;
+            high0 = HIGH0;
+            high1 = high1;
+            parity = PARITY;
         }
     }
 
