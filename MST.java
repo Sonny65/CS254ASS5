@@ -105,7 +105,7 @@ public class MST {
     //
     private Surface build(RootPaneContainer pane, int an) {
         final Coordinator c = new Coordinator();
-        Surface s = new Surface(n, sd, c);
+        Surface s = new Surface(n, sd, c, numThreads);
         Animation t = null;
         if (an == SHOW_RESULT || an == FULL_ANIMATION) {
             t = new Animation(s);
@@ -248,6 +248,7 @@ class Surface {
     private int miny;   // smallest y value among all points
     private int maxx;   // largest x value among all points
     private int maxy;   // largest y value among all points
+    private int numThreads = 1; //default
     public int getMinx() {return minx;}
     public int getMiny() {return miny;}
     public int getMaxx() {return maxx;}
@@ -750,15 +751,24 @@ class Surface {
             triangulate(l, i, low1, high1, low0, mid, 1-parity);
         } else {
             // divide and conquer
-            triangulateWorker tWorker1 = new triangulateWorker(l, i, low1, high1, low0, mid, 1-parity);
-            tWorker1.start();
-            triangulateWorker tWorker2 = new triangulateWorker(j, r, low1, high1, mid, high0, 1-parity);
-            tWorker2.start();
+            if (numThreads > -16){
+                triangulateWorker tWorker1 = new triangulateWorker(l, i, low1, high1, low0, mid, 1-parity);
+                tWorker1.start();
+                numThreads--;
+                triangulateWorker tWorker2 = new triangulateWorker(j, r, low1, high1, mid, high0, 1-parity);
+                tWorker2.start();
+                numThreads--;
 
-            try {
-                tWorker1.join();
-                tWorker2.join();
-            } catch (InterruptedException e){}
+                try {
+                    tWorker1.join();
+                    numThreads++;
+                    tWorker2.join();
+                    numThreads++;
+                } catch (InterruptedException e){}
+            } else {
+                triangulate(l, i, low1, high1, low0, mid, 1-parity);
+                triangulate(j, r, low1, high1, mid, high0, 1-parity);
+            }
 
 
             // prepare to stitch meshes together up the middle:
@@ -984,10 +994,11 @@ class Surface {
 
     // Constructor
     //
-    public Surface(int N, long SD, Coordinator C) {
+    public Surface(int N, long SD, Coordinator C, int THREADS) {
         n = N;
         sd = SD;
         coord = C;
+        numThreads = THREADS;
 
         points = new point[n];
         edges = new ConcurrentSkipListSet<edge>(new edgeComp());
