@@ -248,7 +248,9 @@ class Surface {
     private int miny;   // smallest y value among all points
     private int maxx;   // largest x value among all points
     private int maxy;   // largest y value among all points
-    private int numThreads = 1; //default
+    private int DwyernumThreads = 1; //default
+    
+    
     public int getMinx() {return minx;}
     public int getMiny() {return miny;}
     public int getMaxx() {return maxx;}
@@ -751,39 +753,39 @@ class Surface {
             triangulate(l, i, low1, high1, low0, mid, 1-parity);
         } else {
             // divide and conquer
-            if (numThreads > 1){
+            if (DwyernumThreads > 1){
                 if ((i-l)>5000&&(r-j)>5000) {
                     triangulateWorker tWorker1 = new triangulateWorker(l, i, low1, high1, low0, mid, 1-parity);
                     tWorker1.start();
-                    numThreads--;
+                    DwyernumThreads--;
                     triangulateWorker tWorker2 = new triangulateWorker(j, r, low1, high1, mid, high0, 1-parity);
                     tWorker2.start();
-                    numThreads--;
+                    DwyernumThreads--;
 
                     try {
                         tWorker1.join();
-                        numThreads++;
+                        DwyernumThreads++;
                         tWorker2.join();
-                        numThreads++;
+                        DwyernumThreads++;
                     } catch (InterruptedException e){}
                 } else if ((i-l)>5000) {
                     triangulateWorker tWorker1 = new triangulateWorker(l, i, low1, high1, low0, mid, 1-parity);
                     tWorker1.start();
-                    numThreads--;
+                    DwyernumThreads--;
                     triangulate(j, r, low1, high1, mid, high0, 1-parity);
 
                     try {
                         tWorker1.join();
-                        numThreads++;
+                        DwyernumThreads++;
                     } catch (InterruptedException e){}
                 } else if ((r-j)>5000) {
                     triangulateWorker tWorker2 = new triangulateWorker(j, r, low1, high1, mid, high0, 1-parity);
                     tWorker2.start();
-                    numThreads--;
+                    DwyernumThreads--;
 
                     try {
                         tWorker2.join();
-                        numThreads++;
+                        DwyernumThreads++;
                     } catch (InterruptedException e){}
                 } else {
                     triangulate(l, i, low1, high1, low0, mid, 1-parity);
@@ -1022,7 +1024,7 @@ class Surface {
         n = N;
         sd = SD;
         coord = C;
-        numThreads = THREADS;
+        DwyernumThreads = THREADS;
 
         points = new point[n];
         edges = new ConcurrentSkipListSet<edge>(new edgeComp());
