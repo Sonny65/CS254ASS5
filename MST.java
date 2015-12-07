@@ -1004,21 +1004,29 @@ class Surface {
             int numTrees = NUMTREES;
             int counter = 0;
             for (edge e : EDGES) {
-                if (counter < 100){
+                if (counter < 5){
                     tempEdges.add(e);
                     counter++;
                     numTrees--;
                 } else {
+                    KruskalnumThread--;
+                    KruskalWorker worker = new KruskalWorker(tempEdges, counter);
                     counter = 0;
-                    new KruskalWorker(tempEdges, counter);
+                    tempEdges = new ConcurrentSkipListSet<edge>(new edgeComp());
+                    worker.start();
                 }
-                point st1 = e.points[0].subtree();
-                point st2 = e.points[1].subtree();
-                if (st1 != st2) {
-                    // This edge joins two previously separate subtrees.
-                    st1.merge(st2);
-                    e.addToMST();
-                    if (--numTrees == 1) break;
+            }
+            if (counter!=0){
+                System.out.println("s2");
+                for (edge e : tempEdges) {
+                    point st1 = e.points[0].subtree();
+                    point st2 = e.points[1].subtree();
+                    if (st1 != st2) {
+                        // This edge joins two previously separate subtrees.
+                        st1.merge(st2);
+                        e.addToMST();
+                        if (--numTrees == 1) break;
+                    }
                 }
             }
         } else {
@@ -1042,21 +1050,29 @@ class Surface {
             int numTrees = n;
             int counter = 0;
             for (edge e : edges) {
-                if (counter < 100){
+                if (counter < 5){
                     tempEdges.add(e);
                     counter++;
                     numTrees--;
                 } else {
+                    System.out.println("s1");
+                    KruskalnumThread--;
+                    KruskalWorker worker = new KruskalWorker(tempEdges, counter);
                     counter = 0;
-                    new KruskalWorker(tempEdges, counter);
+                    tempEdges = new ConcurrentSkipListSet<edge>(new edgeComp());
+                    worker.start();
                 }
-                point st1 = e.points[0].subtree();
-                point st2 = e.points[1].subtree();
-                if (st1 != st2) {
-                    // This edge joins two previously separate subtrees.
-                    st1.merge(st2);
-                    e.addToMST();
-                    if (--numTrees == 1) break;
+            }
+            if (counter!=0){
+                for (edge e : tempEdges) {
+                    point st1 = e.points[0].subtree();
+                    point st2 = e.points[1].subtree();
+                    if (st1 != st2) {
+                        // This edge joins two previously separate subtrees.
+                        st1.merge(st2);
+                        e.addToMST();
+                        if (--numTrees == 1) break;
+                    }
                 }
             }
         } else {
@@ -1080,6 +1096,7 @@ class Surface {
 
         public void run() {
             try {
+                System.out.println("s3");
                 coord.register();
                 for (edge e : edges) {
                     point st1 = e.points[0].subtree();
