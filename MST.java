@@ -993,55 +993,6 @@ class Surface {
             }
     }
 
-    // This is the actual MST calculation.
-    // It relies on the fact that set "edges" is sorted by length, so
-    // enumeration occurs shortest-to-longest.
-    //
-    // public void KruskalSolve(SortedSet<edge> EDGES, int NUMTREES, int WorkerCounter) throws Coordinator.KilledException {
-    //     if (KruskalnumThread>1){
-    //         SortedSet<edge> tempEdges = new ConcurrentSkipListSet<edge>(new edgeComp());
-    //         int numTrees = NUMTREES;
-    //         int counter = 0;
-    //         for (edge e : EDGES) {
-    //             if (counter < 5){
-    //                 tempEdges.add(e);
-    //                 counter++;
-    //             } else {
-    //                 KruskalnumThread--;
-    //                 KruskalWorker worker = new KruskalWorker(tempEdges, counter);
-    //                 counter = 0;
-    //                 tempEdges = new ConcurrentSkipListSet<edge>(new edgeComp());
-    //                 worker.start();
-    //             }
-    //         }
-    //         if (counter!=0){
-    //             System.out.println("s2");
-    //             for (edge e : tempEdges) {
-    //                 point st1 = e.points[0].subtree();
-    //                 point st2 = e.points[1].subtree();
-    //                 if (st1 != st2) {
-    //                     // This edge joins two previously separate subtrees.
-    //                     st1.merge(st2);
-    //                     e.addToMST();
-    //                     if (--numTrees == 1) break;
-    //                 }
-    //             }
-    //         }
-    //     } else {
-    //         int numTrees = NUMTREES;
-    //         for (edge e : edges) {
-    //             point st1 = e.points[0].subtree();
-    //             point st2 = e.points[1].subtree();
-    //             if (st1 != st2) {
-    //                 // This edge joins two previously separate subtrees.
-    //                 st1.merge(st2);
-    //                 e.addToMST();
-    //                 if (--numTrees == 1) break;
-    //             }
-    //         }
-    //     }
-    // }
-
     public void KruskalSolve(int WorkerCounter) throws Coordinator.KilledException {
         KruskalWorker worker;
         if (KruskalnumThread>1){
