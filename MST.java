@@ -167,7 +167,7 @@ public class MST {
             try {
                 s.DwyerSolve();
                 midTime = new Date().getTime();
-                s.KruskalSolve();
+                s.KruskalSolve(0);
             } catch(Coordinator.KilledException e) { }
             long endTime = new Date().getTime();
             System.out.printf("elapsed time: %.3f + %.3f = %.3f seconds\n",
@@ -205,7 +205,7 @@ class Worker extends Thread {
         try {
             c.register();
             s.DwyerSolve();
-            s.KruskalSolve();
+            s.KruskalSolve(0);
             c.unregister();
         } catch(Coordinator.KilledException e) { }
         if (a != null) {
@@ -250,7 +250,7 @@ class Surface {
     private int maxy;   // largest y value among all points
     private int DwyernumThreads = 1; //default
     private int KruskalnumThread = 1; //default
-
+    private ArrayList<KruskalWorker> WorkerList = new ArrayList<>();
 
     public int getMinx() {return minx;}
     public int getMiny() {return miny;}
@@ -755,7 +755,7 @@ class Surface {
         } else {
             // divide and conquer
             if (DwyernumThreads > 1){
-                if ((i-l)>5000&&(r-j)>5000) {
+                if ((i-l)>200&&(r-j)>200) {
                     triangulateWorker tWorker1 = new triangulateWorker(l, i, low1, high1, low0, mid, 1-parity);
                     tWorker1.start();
                     DwyernumThreads--;
@@ -769,7 +769,7 @@ class Surface {
                         tWorker2.join();
                         DwyernumThreads++;
                     } catch (InterruptedException e){}
-                } else if ((i-l)>5000) {
+                } else if ((i-l)>200) {
                     triangulateWorker tWorker1 = new triangulateWorker(l, i, low1, high1, low0, mid, 1-parity);
                     tWorker1.start();
                     DwyernumThreads--;
@@ -779,7 +779,7 @@ class Surface {
                         tWorker1.join();
                         DwyernumThreads++;
                     } catch (InterruptedException e){}
-                } else if ((r-j)>5000) {
+                } else if ((r-j)>200) {
                     triangulateWorker tWorker2 = new triangulateWorker(j, r, low1, high1, mid, high0, 1-parity);
                     tWorker2.start();
                     DwyernumThreads--;
@@ -893,7 +893,6 @@ class Surface {
             // are no longer needed.
 
             while (true) {
-
                 // Find candidate endpoint.  Yet another nested subroutine.
                 //
                 class findCandidateClass {
@@ -998,53 +997,52 @@ class Surface {
     // It relies on the fact that set "edges" is sorted by length, so
     // enumeration occurs shortest-to-longest.
     //
-    public void KruskalSolve(SortedSet<edge> EDGES, int NUMTREES) throws Coordinator.KilledException {
-        if (KruskalnumThread>1){
-            SortedSet<edge> tempEdges = new ConcurrentSkipListSet<edge>(new edgeComp());
-            int numTrees = NUMTREES;
-            int counter = 0;
-            for (edge e : EDGES) {
-                if (counter < 5){
-                    tempEdges.add(e);
-                    counter++;
-                    numTrees--;
-                } else {
-                    KruskalnumThread--;
-                    KruskalWorker worker = new KruskalWorker(tempEdges, counter);
-                    counter = 0;
-                    tempEdges = new ConcurrentSkipListSet<edge>(new edgeComp());
-                    worker.start();
-                }
-            }
-            if (counter!=0){
-                System.out.println("s2");
-                for (edge e : tempEdges) {
-                    point st1 = e.points[0].subtree();
-                    point st2 = e.points[1].subtree();
-                    if (st1 != st2) {
-                        // This edge joins two previously separate subtrees.
-                        st1.merge(st2);
-                        e.addToMST();
-                        if (--numTrees == 1) break;
-                    }
-                }
-            }
-        } else {
-            int numTrees = NUMTREES;
-            for (edge e : edges) {
-                point st1 = e.points[0].subtree();
-                point st2 = e.points[1].subtree();
-                if (st1 != st2) {
-                    // This edge joins two previously separate subtrees.
-                    st1.merge(st2);
-                    e.addToMST();
-                    if (--numTrees == 1) break;
-                }
-            }
-        }
-    }
+    // public void KruskalSolve(SortedSet<edge> EDGES, int NUMTREES, int WorkerCounter) throws Coordinator.KilledException {
+    //     if (KruskalnumThread>1){
+    //         SortedSet<edge> tempEdges = new ConcurrentSkipListSet<edge>(new edgeComp());
+    //         int numTrees = NUMTREES;
+    //         int counter = 0;
+    //         for (edge e : EDGES) {
+    //             if (counter < 5){
+    //                 tempEdges.add(e);
+    //                 counter++;
+    //             } else {
+    //                 KruskalnumThread--;
+    //                 KruskalWorker worker = new KruskalWorker(tempEdges, counter);
+    //                 counter = 0;
+    //                 tempEdges = new ConcurrentSkipListSet<edge>(new edgeComp());
+    //                 worker.start();
+    //             }
+    //         }
+    //         if (counter!=0){
+    //             System.out.println("s2");
+    //             for (edge e : tempEdges) {
+    //                 point st1 = e.points[0].subtree();
+    //                 point st2 = e.points[1].subtree();
+    //                 if (st1 != st2) {
+    //                     // This edge joins two previously separate subtrees.
+    //                     st1.merge(st2);
+    //                     e.addToMST();
+    //                     if (--numTrees == 1) break;
+    //                 }
+    //             }
+    //         }
+    //     } else {
+    //         int numTrees = NUMTREES;
+    //         for (edge e : edges) {
+    //             point st1 = e.points[0].subtree();
+    //             point st2 = e.points[1].subtree();
+    //             if (st1 != st2) {
+    //                 // This edge joins two previously separate subtrees.
+    //                 st1.merge(st2);
+    //                 e.addToMST();
+    //                 if (--numTrees == 1) break;
+    //             }
+    //         }
+    //     }
+    // }
 
-    public void KruskalSolve() throws Coordinator.KilledException {
+    public void KruskalSolve(int WorkerCounter) throws Coordinator.KilledException {
         if (KruskalnumThread>1){
             SortedSet<edge> tempEdges = new ConcurrentSkipListSet<edge>(new edgeComp());
             int numTrees = n;
@@ -1053,11 +1051,11 @@ class Surface {
                 if (counter < 5){
                     tempEdges.add(e);
                     counter++;
-                    numTrees--;
                 } else {
                     System.out.println("s1");
                     KruskalnumThread--;
-                    KruskalWorker worker = new KruskalWorker(tempEdges, counter);
+                    KruskalWorker worker = new KruskalWorker(tempEdges, counter, WorkerCounter);
+                    WorkerCounter++;
                     counter = 0;
                     tempEdges = new ConcurrentSkipListSet<edge>(new edgeComp());
                     worker.start();
@@ -1093,6 +1091,7 @@ class Surface {
     class KruskalWorker extends Thread {
         int numTrees = n;
         SortedSet<edge> edges = new ConcurrentSkipListSet<edge>(new edgeComp());
+        int workercounter = 0;
 
         public void run() {
             try {
@@ -1114,9 +1113,10 @@ class Surface {
 
         // Constructor
         //
-        public KruskalWorker(SortedSet<edge> EDGES, int NUMTREES) {
+        public KruskalWorker(SortedSet<edge> EDGES, int NUMTREES, int WorkerCounter) {
                 edges = EDGES;
                 numTrees = NUMTREES;
+                workercounter = WorkerCounter;
             }
     }
 
