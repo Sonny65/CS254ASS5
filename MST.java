@@ -995,13 +995,14 @@ class Surface {
 
     public void KruskalSolve(int WorkerCounter) throws Coordinator.KilledException {
         KruskalWorker worker;
+        
         if (KruskalnumThread>1){
             int numTrees = n;
             int counter = 0;
             for (edge e : edges) {
                 KruskalnumThread--;
                 if (KruskalnumThread>1) {
-                    worker = new KruskalWorker(e,numTrees,KruskalnumThread);
+                    worker = new KruskalWorker(e,numTrees);
                     worker.start();
                     if (numTrees == 1) break;
                 } else {
@@ -1036,7 +1037,6 @@ class Surface {
         } else {
             int numTrees = n;
             for (edge e : edges) {
-                System.out.println("Remain"+" working");
                 point st1 = e.points[0].subtree();
                 point st2 = e.points[1].subtree();
                 if (st1 != st2) {
@@ -1052,11 +1052,9 @@ class Surface {
     class KruskalWorker extends Thread {
         edge e;
         int N;
-        int threadamout;
         public void run() {
             try {
                 coord.register();
-                //System.out.println("Used");
                 point st1 = e.points[0].subtree();
                 point st2 = e.points[1].subtree();
                 if (st1 != st2) {
@@ -1066,16 +1064,15 @@ class Surface {
                     --N;
                 }
                 coord.unregister();
-                threadamout++;
+                KruskalnumThread++;
             } catch(Coordinator.KilledException e) { }
         }
 
         // Constructor
         //
-        public KruskalWorker(edge EDGE, int N,int threadamout) {
+        public KruskalWorker(edge EDGE, int N) {
             e = EDGE;
             this.N = N;
-            this.threadamout = threadamout;
         }
     }
 
