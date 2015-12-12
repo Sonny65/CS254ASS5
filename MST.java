@@ -1056,6 +1056,7 @@ class Surface {
                     KruskalnumThread--;
                     KruskalWorker worker = new KruskalWorker(tempEdges, counter, WorkerCounter);
                     WorkerCounter++;
+                    WorkerList.add(worker);
                     counter = 0;
                     tempEdges = new ConcurrentSkipListSet<edge>(new edgeComp());
                     worker.start();
@@ -1102,6 +1103,12 @@ class Surface {
                     point st2 = e.points[1].subtree();
                     if (st1 != st2) {
                         // This edge joins two previously separate subtrees.
+                        for (int i = 0; i < workercounter; i++){
+                            try {
+                                WorkerList.get(i).join();
+                                DwyernumThreads++;
+                            } catch (InterruptedException error){}
+                        }
                         st1.merge(st2);
                         e.addToMST();
                         if (--numTrees == 1) break;
