@@ -1043,27 +1043,17 @@ class Surface {
     // }
 
     public void KruskalSolve(int WorkerCounter) throws Coordinator.KilledException {
+        KruskalWorker worker;
         if (KruskalnumThread>1){
-            SortedSet<edge> tempEdges = new ConcurrentSkipListSet<edge>(new edgeComp());
             int numTrees = n;
             int counter = 0;
             for (edge e : edges) {
-                if (counter < 5){
-                    tempEdges.add(e);
-                    counter++;
-                } else {
-                    System.out.println("s1");
-                    KruskalnumThread--;
-                    KruskalWorker worker = new KruskalWorker(tempEdges, counter, WorkerCounter);
-                    WorkerCounter++;
-                    WorkerList.add(worker);
-                    counter = 0;
-                    tempEdges = new ConcurrentSkipListSet<edge>(new edgeComp());
+                KruskalnumThread--;
+                if (KruskalnumThread>1) {
+                    worker = new KruskalWorker(e,numTrees,KruskalnumThread);
                     worker.start();
-                }
-            }
-            if (counter!=0){
-                for (edge e : tempEdges) {
+                    if (numTrees == 1) break;
+                } else {
                     point st1 = e.points[0].subtree();
                     point st2 = e.points[1].subtree();
                     if (st1 != st2) {
@@ -1074,57 +1064,68 @@ class Surface {
                     }
                 }
             }
+            // if (counter!=0){
+            //     for (edge e : tempEdges) {
+            //         System.out.println("Remain Edgesize: "+edges.size());
+            //         for (int i = 0; i < WorkerList.size(); i++){
+            //                 try {
+            //                     WorkerList.get(i).join();
+            //                 } catch (InterruptedException error){}
+            //             }
+            //         point st1 = e.points[0].subtree();
+            //         point st2 = e.points[1].subtree();
+            //         if (st1 != st2) {
+            //             // This edge joins two previously separate subtrees.
+            //             st1.merge(st2);
+            //             e.addToMST();
+            //             if (--numTrees == 1) break;
+            //         }
+            //     }
+            // }
         } else {
             int numTrees = n;
             for (edge e : edges) {
+                System.out.println("Remain"+" working");
                 point st1 = e.points[0].subtree();
                 point st2 = e.points[1].subtree();
                 if (st1 != st2) {
                     // This edge joins two previously separate subtrees.
                     st1.merge(st2);
                     e.addToMST();
-                    if (--numTrees == 1) break;
+                    if (numTrees == 1) break;
                 }
             }
         }
     }
 
     class KruskalWorker extends Thread {
-        int numTrees = n;
-        SortedSet<edge> edges = new ConcurrentSkipListSet<edge>(new edgeComp());
-        int workercounter = 0;
-
+        edge e;
+        int N;
+        int threadamout;
         public void run() {
             try {
-                System.out.println("s3");
                 coord.register();
-                for (edge e : edges) {
-                    point st1 = e.points[0].subtree();
-                    point st2 = e.points[1].subtree();
-                    if (st1 != st2) {
-                        // This edge joins two previously separate subtrees.
-                        for (int i = 0; i < workercounter; i++){
-                            try {
-                                WorkerList.get(i).join();
-                                DwyernumThreads++;
-                            } catch (InterruptedException error){}
-                        }
-                        st1.merge(st2);
-                        e.addToMST();
-                        if (--numTrees == 1) break;
-                    }
+                //System.out.println("Used");
+                point st1 = e.points[0].subtree();
+                point st2 = e.points[1].subtree();
+                if (st1 != st2) {
+                    // This edge joins two previously separate subtrees.
+                    st1.merge(st2);
+                    e.addToMST();
+                    --N;
                 }
                 coord.unregister();
+                threadamout++;
             } catch(Coordinator.KilledException e) { }
         }
 
         // Constructor
         //
-        public KruskalWorker(SortedSet<edge> EDGES, int NUMTREES, int WorkerCounter) {
-                edges = EDGES;
-                numTrees = NUMTREES;
-                workercounter = WorkerCounter;
-            }
+        public KruskalWorker(edge EDGE, int N,int threadamout) {
+            e = EDGE;
+            this.N = N;
+            this.threadamout = threadamout;
+        }
     }
 
     // This is a wrapper for the root call to triangulate().
